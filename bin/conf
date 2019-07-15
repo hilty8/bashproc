@@ -1,0 +1,12 @@
+# 記事リポジトリの名前
+contents="bashproc_contents"
+# 記事リポジトリのユーザ名
+contents_owner="hilty8"
+# 記事リポジトリ + bashproc を置くディレクトリ
+www_dir="/var/www"
+# 記事リポジトリのパス
+contents_dir="${www_dir}/${contents}"
+# 記事リポジトリをインストールするパス
+app_dir="${www_dir}/bashproc"
+
+

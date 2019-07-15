@@ -1,0 +1,18 @@
+#!/bin/bash -ex
+
+###############################################################################
+# 処理概要
+# -- confファイル読み込み
+# -- ???
+# -- bashproc_contents ディレクトリに移動して git pull を実施
+###############################################################################
+
+source "$(dirname $0)/conf"
+# dd -> ファイルをブロック単位でコピー、変換する
+[ -n "${CONTENT_LENGTH}" ] && dd bs=${CONTENT_LENGTH} > /dev/null
+
+echo -e 'Content-type: text/html\n\n'
+
+cd "${contents_dir}"
+git pull
+

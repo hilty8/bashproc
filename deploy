@@ -1,0 +1,38 @@
+#!/bin/bash -eux
+
+# confファイル読み込み
+# -- contents
+# -- contents_owner
+# -- www_dir
+# -- contents_dir
+# -- app_dir
+source "$(dirname $0)/bin/conf"
+
+# root ユーザー以外であれば終了する
+[ "$USER" = "root" ]
+
+# インストール
+rsync -av --delete "$(dirname $0)/bin/" "${app_dir/}"
+chown www-data:www-data "${app_dir}" -R
+
+# fetch CGI のRename
+cd "${app_dir}"
+# -- /dev/urandom     -> バイナリを無限に放出するデバイスファイル
+# -- tr -cd 0-9a-zA-Z -> 左記正規表現に該当する乱数を取得
+rnd=$(cat /dev/urandom | tr -cd 0-9a-zA-Z | head -c 32)
+# /home/yano/rnd が存在する場合、それをrnd に代入する（最初に生成したものを使い回す）意図
+[ -e "/home/yano/rnd" ] && rnd=$(cat /home/yano/rnd ) # REMOVE ON RELEASE
+
+mv "fetch" "fetch_${rnd}.cgi"
+
+
+# 記事リポジトリを削除し、git cloneする
+rm -rf "${contents_dir:?}"
+cd "${www_dir}"
+#git clone "https://github.com/${contents_owner}/${contents}"
+git clone "https://github.com/${contents_owner}/${contents}.git"
+chown www-data:www-data "${contents_dir}" -R
+# 補足：www-data は apache のデフォルト実行ユーザ
+
+echo "call fetch_${rnd}.cgi from GitHub"
+
