@@ -1,15 +1,13 @@
 #!/bin/bash -eux
 
-# confファイル読み込み
-# -- contents
-# -- contents_owner
-# -- www_dir
-# -- contents_dir
-# -- app_dir
 source "$(dirname $0)/bin/conf"
 
 # root ユーザー以外であれば終了する
 [ "$USER" = "root" ]
+
+# ログディレクトリ作成
+mkdir -p "${log_dir}"
+chown www-data:www-data "${log_dir}"
 
 # インストール
 rsync -av --delete "$(dirname $0)/bin/" "${app_dir/}"

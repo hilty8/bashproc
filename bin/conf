@@ -8,5 +8,8 @@ www_dir="/var/www"
 contents_dir="${www_dir}/${contents}"
 # 記事リポジトリをインストールするパス
 app_dir="${www_dir}/bashproc"
-
+# view ディレクトリ
+view_dir="${app_dir}/view"
+# ログ
+log_dir="/var/log/${contents}"
 
