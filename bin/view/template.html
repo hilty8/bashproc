@@ -2,10 +2,21 @@ Content-type: text/html
 
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta chartset="utf-8" />
-	</head>
-	<body>
+<head>
+	<meta chartset="utf-8" />
+	<title>$title$</title>
+</head>
+<body>
+	<header>
+		<p>$created_time$</p>
+		<p>$nav$</p>
+	</header>
 		$body$
-	</body>
+	<footer>
+		<p>created: $created_time$,
+			modified: $modified_time$,
+			keywords: $Keywords$</p>
+		<p>Copyright: $Copyright$</p>
+	</footer>
+</body>
 </html>

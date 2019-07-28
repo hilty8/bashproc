@@ -1,19 +1,85 @@
 #!/bin/bash -ex
-
-###############################################################################
-# 処理概要
-# -- confファイル読み込み
-# -- ???
-# -- bashproc_contents ディレクトリに移動して git pull を実施
-###############################################################################
-
 source "$(dirname $0)/conf"
 exec 2> "${log_dir}/$(basename $0).$(date +%Y%m%d_%H%M%S).$$"
-# dd -> ファイルをブロック単位でコピー、変換する
 [ -n "${CONTENT_LENGTH}" ] && dd bs=${CONTENT_LENGTH} > /dev/null
 
-echo -e 'Content-type: text/html\n\n'
+echo -e 'Content-type: text/html\n'
 
 cd "${contents_dir}"
 git pull
+
+# CREATE TIMESTAMP FILES IF NOT EXIST
+find posts pages -maxdepth 1 -type d          |
+grep /                                        |
+while read d ; do
+	[ -f "${contents_dir}/$d/main.md" ]       && 
+	mkdir -p "${data_dir}/$d"                 &&
+	### ADD TIME FILES ###
+	git log -p "${contents_dir}/$d/main.md"   |
+	grep '^Date:'                             |
+	awk '{print $2,$3,$4,$5,$6}'              |
+	date -f - "+%Y-%m-%d %H:%M:%S"            |
+	awk -v cf="${data_dir}/$d/created_time"   \
+	    -v mf="${data_dir}/$d/modified_time"  \
+	    'NR==1{print > mf}END{print > cf}'
+done
+
+### DELETE DELETED ARTICLES ###
+cd "${data_dir}"
+find posts pages -maxdepth 1 -type d |
+	grep /                           |
+	while read d ; do
+		[ -f "${contents_dir}/$d/main.md" ] && continue
+		rm -Rf "./$d"
+	done
+
+### MAKE SOME SHORTCUT ###
+find posts pages -maxdepth 1 -type d |
+	grep /                           |
+	while read d; do
+		[ -f "${contents_dir}/$d/main.md" ] || continue
+
+		grep -m 1 '^# ' "${contents_dir}/$d/main.md"  | # マークダウンの#記号つまりタイトルに該当する見出しを最初の１つだけ取得
+			sed 's/^#  *//' |
+			awk '{if(/^$/){print "NO TITLE"}else{print}}
+				END{if(NR==0){print "NO TITLE"}}'  |    # タイトルがない場合にNO TITLE とつけるため
+			tee "${data_dir}/$d/title"  |
+			awk -v d="$d" '{gsub(/s\//,"=",d);
+				print "<a href=\"/?" d "\">" $0 "</a>"}' > "${data_dir}/$d/link"
+
+			touch "${data_dir}/$d/nav"
+	done
+
+### MAKE POST/PAGE LIST ###
+tmp=/tmp/$$
+
+# LIST POSTS DATA
+cd "${data_dir}"
+find posts pages -type f     |
+	grep created_time        |
+	xargs grep -H .          |
+	sed 's;created_time:; ;' |
+	awk '{print $2,$3,$1}'   |
+	sort -k1,2               |
+	tee $tmp-list            |
+	awk '$3~/^posts/'        > $tmp-post_list
+mv $tmp-post_list "${data_dir}/post_list"
+
+# LIST PAGES DATA
+awk '$3~/^pages/' $tmp-list > $tmp-page_list
+mv $tmp-page_list "${data_dir}/page_list"
+
+# MAKE PREV/NEXT NAVIGATION LINK
+cat "${data_dir}/post_list" |
+while read ymd hms d ; do
+	grep -C1 " $d$" "${data_dir}/post_list"                      |
+	awk '{print $3}'                                             |
+	sed -n -e '1p' -e '$p'                                       |
+	xargs -I@ cat "${data_dir}/@/link"                           |
+	awk 'NR<=2{print}END{for(i=NR;i<2;i++){print "LOST TITLE"}}' |
+	sed -e 'ls/^/prev:/' -e '2s/^/next:/'                        |
+	tr '\n' ' ' > "${data_dir}/$d/nav"
+done
+
+rm -f $tmp-*
 
