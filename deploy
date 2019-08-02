@@ -4,8 +4,8 @@ source "$(dirname $0)/bin/conf"
 
 # logディレクトリ作成       /var/log/bashproc_contents
 # timestampディレクトリ作成 /var/www/bashproc_contents_data
-mkdir -p "${log_dir}" "${data_dir}"
-chown www-data:www-data "${log_dir}" "${data_dir}"
+mkdir -p "${log_dir}" "${data_dir}" "${data_dir}/counters"
+chown www-data:www-data "${log_dir}" "${data_dir}" "{data_dir}/counters"
 
 # INSTALL THIS SYSTEM
 rsync -av --delete "$(dirname $0)/bin/" "${app_dir/}"
